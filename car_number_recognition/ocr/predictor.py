@@ -65,7 +65,7 @@ if __name__ == "__main__":
 
     image_paths = os.listdir(args.data_dir)
     predictor = Predictor(args.model, (32, 80))
-    for filename in image_paths[:10]:
+    for filename in image_paths[:30]:
         fullpath = os.path.join(args.data_dir, filename)
         img = cv2.imread(fullpath)
         text = predictor.predict(img)
