@@ -51,6 +51,7 @@ RUN pip3 install --no-cache-dir pytorch-argus
 RUN pip3 install --no-cache-dir opencv-python
 
 
+
 ENV PYTHONPATH $PYTHONPATH:/workdir/src
 ENV TORCH_HOME=/workdir/data/.torch
 
