@@ -42,11 +42,13 @@ RUN git clone --depth 1 -b release/4.2 --single-branch https://github.com/FFmpeg
     make -j$(nproc) && make install && ldconfig &&\
     cd ../.. && rm -rf FFmpeg
 
-RUN pip3 install --no-cache-dir numpy==1.16.4
+RUN pip3 install --no-cache-dir numpy
 
-RUN pip3 install --no-cache-dir \
-    torch==1.2.0 \
-    torchvision==0.4.0
+RUN pip3 install --no-cache-dir torch torchvision
+RUN pip3 install --no-cache-dir trafaret trafaret-config
+RUN pip3 install --no-cache-dir deep-pipe
+RUN pip3 install --no-cache-dir pytorch-argus
+RUN pip3 install --no-cache-dir opencv-python
 
 
 ENV PYTHONPATH $PYTHONPATH:/workdir/src
