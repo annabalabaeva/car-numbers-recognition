@@ -5,6 +5,7 @@ import torchvision
 from ocr.converter import strLabelConverter
 from ocr.transforms import *
 import string
+from tabulate import tabulate
 
 
 class Predictor:
@@ -39,17 +40,17 @@ class Predictor:
         assert (len(images.shape)==3 or len(images.shape)==4) and images.shape[-1]==3
         if len(images.shape)==3:
             images = cv2.cvtColor(images, cv2.COLOR_BGR2GRAY)
-            images = self.transform(images).unsqueeze(0)
+            images = self.transform(images).unsqueeze(0).to(self.device)
         else:
             out = []
             for image in images:
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
                 out.append(self.transform(image))
-            images = torch.stack(out)
+            images = torch.stack(out).to(self.device)
         pred = self.model.predict(images)
-        print(torch.argmax(pred, 2))
+        # print(torch.argmax(pred, 2))
         text = self.preds_converter(pred, images.size(0))
-        return text
+        return text[0]
 
 if __name__ == "__main__":
     import argparse
@@ -61,14 +62,22 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-dir", help="Directory with images", required=True)
     parser.add_argument("--model", help="Path to model", required=True)
+    parser.add_argument("--cuda", action="store_true", help="If gpu should be used")
+    parser.add_argument("--show", action="store_true", help="If images should be shown")
     args = parser.parse_args()
-
+    device = "cuda" if args.cuda else "cpu"
     image_paths = os.listdir(args.data_dir)
-    predictor = Predictor(args.model, (32, 80))
+    predictor = Predictor(args.model, (32, 80), device)
+    out_list = []
     for filename in image_paths[:30]:
         fullpath = os.path.join(args.data_dir, filename)
         img = cv2.imread(fullpath)
         text = predictor.predict(img)
-        plt.imshow(img)
-        plt.title(text)
-        plt.show()
+        if args.show:
+            plt.imshow(img)
+            plt.title(text)
+            plt.show()
+        out_list.append((filename, text))
+
+    print(tabulate(out_list, headers=['Filename', 'Predicted number']))
+
