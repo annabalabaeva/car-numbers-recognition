@@ -20,7 +20,7 @@ docker exec -it car_number_recognition bash
 ```
 3. Download the model
 ```bash
-wget --no-check-certificate 'https://docs.google.com/uc?export=download&id=1LvxTcoV8y5WRW4qHyYe2kupby89kZ0S1' -O model/model.pth
+wget --no-check-certificate 'https://docs.google.com/uc?export=download&id=1PJSivxkmCr4GNAcvswq2xr7wnDhL342W' -O model/model.pth
 ```
 4. Run test. Result will be printed in the console.
 ```bash
