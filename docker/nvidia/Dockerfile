@@ -49,6 +49,7 @@ RUN pip3 install --no-cache-dir trafaret trafaret-config
 RUN pip3 install --no-cache-dir deep-pipe
 RUN pip3 install --no-cache-dir pytorch-argus
 RUN pip3 install --no-cache-dir opencv-python
+RUN pip3 install --no-cache-dir tabulate
 
 
 

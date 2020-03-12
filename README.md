@@ -7,7 +7,7 @@ git clone https://github.com/annabalabaeva/car-numbers-recognition
 ```
 2. Create docker image and docker container. Choose nvidia or cpu version.
 ```bash
-cd docker/cpu
+cd car-numbers-recognition/docker/cpu
 ```
 or
 ```bash 
