@@ -1,7 +1,9 @@
 import cv2
 import os
 import re
-
+import matplotlib.pyplot as plt
+import numpy as np
+import random
 from torch.utils.data import Dataset
 import torchvision
 
@@ -29,18 +31,18 @@ class OcrDataset(Dataset):
                 "text": t}
 
     def _get_correct_data(self, data_path, train):
-        list_filenames = sorted(os.listdir(data_path))
+        list_filenames = np.array(sorted(os.listdir(data_path)))
+        random.seed(4)
+        x = np.arange(len(list_filenames))
+        random.shuffle(x)
         if train:
-            list_filenames = list_filenames[:int(len(list_filenames)*0.8)]
+            train_inds = x[:int(len(x) * 0.8)]
+            list_filenames = list_filenames[train_inds]
+            # list_filenames = list_filenames[:64]
         else:
-            list_filenames = list_filenames[int(len(list_filenames) * 0.8):]
-        # pattern = re.compile("[A-Z][0-9][0-9][0-9][A-Z][A-Z] [0-9][0-9][0-9]?.bmp")
-        # list_train_images = [filename for filename in list_filenames if pattern.match(filename)]
+            val_inds = x[int(len(x) * 0.8):]
+            list_filenames = list_filenames[val_inds]
         train_fullpath = [os.path.join(data_path, filename) for filename in list_filenames]
-        # from shutil import copyfile
-        #
-        # for n, path in zip(range(1000, len(list_train_images)), list_train_images):
-        #     copyfile(os.path.join(data_path, path), os.path.join("/data/tips_tricks_data/data/good", str(n)+'_'+path))
         target = [filename[5:-4].replace(" ", "") for filename in list_filenames]
         return train_fullpath, target
 
@@ -90,11 +92,14 @@ if __name__ == "__main__":
         t = measure_time(dataset_torchvision_transforms)
         print("(Torchvision transforms) time per one image:", (t / len(dataset_torchvision_transforms)))
     else:
-        dataset = OcrDataset(args.data_dir, transforms=[Scale((int(1.1*32), int(1.1*80))),
+        dataset = OcrDataset(args.data_dir, transforms=
+               [Scale((int(1.1*32), int(1.1*80))),
+                RandomRotation(p=0.6),
+                RandomBlur()
                   # RandomFlip(),
-                  RandomCrop((32,80)),
-               RandomBrightness(),
-               RandomContrast(),
+               #    RandomCrop((32,80)),
+               # RandomBrightness(),
+               # RandomContrast(),
                                                         ])
         # 3110
         print("Dataset length:", len(dataset))

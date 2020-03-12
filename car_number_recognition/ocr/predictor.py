@@ -64,20 +64,35 @@ if __name__ == "__main__":
     parser.add_argument("--model", help="Path to model", required=True)
     parser.add_argument("--cuda", action="store_true", help="If gpu should be used")
     parser.add_argument("--show", action="store_true", help="If images should be shown")
+    parser.add_argument("--markup", action="store_true", help="If markup other images")
     args = parser.parse_args()
     device = "cuda" if args.cuda else "cpu"
-    image_paths = os.listdir(args.data_dir)
+    image_paths = sorted(os.listdir(args.data_dir))
     predictor = Predictor(args.model, (32, 80), device)
-    out_list = []
-    for filename in image_paths[:30]:
-        fullpath = os.path.join(args.data_dir, filename)
-        img = cv2.imread(fullpath)
-        text = predictor.predict(img)
-        if args.show:
-            plt.imshow(img)
-            plt.title(text)
-            plt.show()
-        out_list.append((filename, text))
+    if args.markup:
+        from tqdm import tqdm
+        n = len(image_paths)
+        for i, filename in tqdm(list(zip(list(range(4000,n+4000)), image_paths))):
+            # print(i)
+            fullpath = os.path.join(args.data_dir, filename)
+            img = cv2.imread(fullpath)
+            text = predictor.predict(img)
+            if len(text)==8 or len(text)==9:
+                # print(os.path.join(args.data_dir, str(i)+"_"+text+'.bmp'))
+                os.rename(fullpath, os.path.join(args.data_dir, str(i)+"_"+text+'.bmp'))
+            else:
+                os.rename(fullpath, os.path.join(args.data_dir, "bad_"+text+'.bmp'))
+    else:
+        out_list = []
+        for filename in image_paths[:10]:
+            fullpath = os.path.join(args.data_dir, filename)
+            img = cv2.imread(fullpath)
+            text = predictor.predict(img)
+            if args.show:
+                plt.imshow(img)
+                plt.title(text)
+                plt.show()
+            out_list.append((filename, text))
 
-    print(tabulate(out_list, headers=['Filename', 'Predicted number']))
+        print(tabulate(out_list, headers=['Filename', 'Predicted number']))
 

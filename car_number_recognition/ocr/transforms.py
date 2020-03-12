@@ -4,7 +4,7 @@
 import torch
 import numpy as np
 import cv2
-from random import random, randint, uniform
+import random
 
 
 class ImageNormalization(object):
@@ -37,17 +37,6 @@ class Scale:
         self.size = size
 
     def __call__(self, image):
-        # h, w = image.shape
-        # if h>w:
-        #     out_w, out_h = int(w/h*self.size), self.size
-        # else:
-        #     out_w, out_h = self.size, int(h/ w * self.size)
-        # image_resized = cv2.resize(image, (out_w, out_h))
-        # out_image = np.zeros((self.size, self.size))
-        # shift_h = (self.size - out_h) // 2
-        # shift_w = (self.size - out_w) // 2
-        # out_image[shift_h:shift_h+out_h, shift_w:shift_w+out_w] = image_resized
-        # return out_image
         h, w = image.shape
         h_ratio = h/self.size[0]
         w_ratio = w/self.size[1]
@@ -79,8 +68,8 @@ class RandomCrop(object):
     def __call__(self, image):
         pad_image = self._pad_if_needed(image)
         h, w = pad_image.shape
-        start_h = randint(0, h - self.out_height)
-        start_w = randint(0, w - self.out_width)
+        start_h = random.randint(0, h - self.out_height)
+        start_w = random.randint(0, w - self.out_width)
         cropped_image = self._crop(pad_image, start_h, start_w)
         return cropped_image
 
@@ -116,33 +105,63 @@ class RandomFlip(object):
 
     def __call__(self, image):
         if self.horizontal:
-            if random() > self.p:
+            if random.random() > self.p:
                 image = image[:, ::-1]
         if self.vertical:
-            if random() > self.p:
+            if random.random() > self.p:
                 image = image[::-1]
         return image
 
 
 class RandomBrightness(object):
-    def __init__(self, min_beta=-30, max_beta=70):
+    def __init__(self, min_beta=-90, max_beta=70):
         self.max_beta = max_beta
         self.min_beta = min_beta
 
     def __call__(self, image):
-        r = uniform(self.min_beta, self.max_beta)
+        r = random.uniform(self.min_beta, self.max_beta)
         image_out = np.clip(image + r, 0, 255)
         return image_out
 
 
 class RandomContrast(object):
-    def __init__(self, min_alpha=0.7, max_alpha=1.3):
+    def __init__(self, min_alpha=0.4, max_alpha=1.3):
         self.max_alpha = max_alpha
         self.min_alpha = min_alpha
 
     def __call__(self, image):
-        r = uniform(self.min_alpha, self.max_alpha)
+        r = random.uniform(self.min_alpha, self.max_alpha)
         image_out = np.uint8(np.clip(r*(np.int16(image)-127)+127, 0, 255))
+        return image_out
+
+class RandomBlur(object):
+    def __init__(self, p=0.4):
+        self.p = p
+
+    def __call__(self, image):
+        r = random.uniform(0.0, 1.0)
+        if r < self.p:
+            image_out = np.uint8(cv2.blur(image, (3, 3)))
+        else:
+            image_out = image
+        return image_out
+
+
+class RandomRotation(object):
+    def __init__(self, p=0.6, min_angle=-10, max_angle=10):
+        self.max_angle = max_angle
+        self.min_angle = min_angle
+        self.p = p
+
+    def __call__(self, image):
+        r = random.uniform(0.0, 1.0)
+        if r < self.p:
+            angle = random.uniform(self.min_angle, self.max_angle)
+            image_center = tuple(np.array(image.shape[1::-1]) / 2)
+            rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
+            image_out = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_AREA, borderMode=cv2.BORDER_REPLICATE)
+        else:
+            image_out = image
         return image_out
 
 

@@ -10,6 +10,7 @@ from ocr.converter import strLabelConverter
 
 class CRNNModel(Model):
     nn_module = {"CRNN": CRNN}
+
     loss = CTCLoss
 
     def __init__(self, params):
@@ -29,20 +30,21 @@ class CRNNModel(Model):
 
         self.optimizer.zero_grad()
         images = batch["image"].to(self.device)
-        # print([batch['text']])
-        texts, length = self.converter.encode(batch["text"]) # USE CONVERTER TO CONVERT TEXT TO INTs and MOVE TO DEVICE TEXT
+
+        texts, length = self.converter.encode(batch["text"])
         text = torch.IntTensor(texts).to(self.device)
         length = length.to(self.device)
         preds = self.nn_module(images)
-        print(torch.argmax(preds, 2)[:, 0])
+
         sim_preds, preds_size = self.preds_converter(preds, images.size(0))
         preds_size = preds_size.to(self.device)
         loss = self.loss(preds, text, preds_size, length)  # here ctc loss
-        # print(loss.item())
+
+        self.nn_module.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_value_(self.nn_module.parameters(), 10)
         self.optimizer.step()
-        # print(sim_preds, batch['text'])
+
         return {
             "prediction": sim_preds,
             "target": batch['text'],
@@ -54,14 +56,11 @@ class CRNNModel(Model):
             self.nn_module.eval()
         with torch.no_grad():
             images = batch["image"].to(self.device)
-            texts, length = self.converter.encode(
-                batch["text"])  # USE CONVERTER TO CONVERT TEXT TO INTs and MOVE TO DEVICE TEXT
+            texts, length = self.converter.encode(batch["text"])
             text = torch.IntTensor(texts).to(self.device)
-            # print(len(texts))
             length = length.to(self.device)
             preds = self.nn_module(images)
             sim_preds, preds_size = self.preds_converter(preds, images.size(0))
-            print(torch.argmax(preds, 2)[:, 0])
             preds_size = preds_size.to(self.device)
             loss = self.loss(preds, text, preds_size, length)  # here ctc loss
             return {

@@ -63,23 +63,28 @@ class CER(Metric):
     better = "min"
 
     def reset(self):
-        self.cer_s, self.cer_i, self.cer_d, self.cer_n = 0, 0, 0, 0
+        # self.cer_s, self.cer_i, self.cer_d, self.cer_n = 0, 0, 0, 0
+
+        self.cer_sum = 0
+        self.count = 0
 
     def update(self, step_output: dict):
         hyp = step_output["prediction"]
         ref = step_output["target"]
-        # cer_s, cer_i, cer_d, cer_n = 0, 0, 0, 0
+        cer_s, cer_i, cer_d, cer_n = 0, 0, 0, 0
         for n in range(len(ref)):
             # update CER statistics
             _, (s, i, d) = levenshtein(ref[n], hyp[n])
-            self.cer_s += s
-            self.cer_i += i
-            self.cer_d += d
-            self.cer_n += len(ref[n])
+            cer_s += s
+            cer_i += i
+            cer_d += d
+            cer_n += len(ref[n])
+        self.cer_sum += 100.0 * (cer_s + cer_i + cer_d) / cer_n
+        self.count += 1
         # TODO: Count correct answers
 
     def compute(self):
-        if self.cer_n == 0:
+        if self.count == 0:
             # raise Exception('Must be at least one example for computation')
             return 0
-        return 100.0 * (self.cer_s + self.cer_i + self.cer_d) / self.cer_n
+        return self.cer_sum / self.count

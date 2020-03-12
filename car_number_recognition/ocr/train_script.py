@@ -34,9 +34,9 @@ DATASET_PATHS = [
     Path(CV_CONFIG.get("data_path"))
 ]
 # CHANGE YOUR BATCH SIZE
-BATCH_SIZE = 64
+BATCH_SIZE = 32
 # 400 EPOCH SHOULD BE ENOUGH
-NUM_EPOCHS = 400
+NUM_EPOCHS = 800
 
 # alphabet = " "
 alphabet = "-ABEKMHOPCTYX"
@@ -50,8 +50,8 @@ MODEL_PARAMS = {"nn_module":
                         "rnn_size": CV_CONFIG.get("model_rnn_size")
                     }),
                 "alphabet": alphabet,
-                "loss": {"reduction":"mean", "zero_infinity":True},
-                "optimizer": ("Adadelta", {"lr": 0.00001}),
+                "loss": {"reduction":"mean"},
+                "optimizer": ("Adam", {"lr": 0.0001}),
                 # CHANGE DEVICE IF YOU USE GPU
                 "device": "cuda",
                 }
@@ -62,41 +62,41 @@ if __name__ == "__main__":
     else:
         EXPERIMENT_DIR.mkdir(parents=True, exist_ok=True)
     h, w = CV_CONFIG.get("ocr_image_size")
-    transforms = [Scale((int(1.05*h), int(1.05*w))),
-                  # RandomFlip(),
-                  RandomCrop((h,w)),
-               RandomBrightness(),
-               RandomContrast(),
+    train_transforms = [Scale((int(1.2*h), int(1.2*w))),
+                        RandomRotation(p=0.6),
+                        RandomBlur(p=0.4),
+                        RandomCrop((h, w)),
+                        RandomBrightness(),
+                        RandomContrast(),
+                        ImageNormalization(),
+                        ImageNormalizationMeanStd(),
+                        ToTensor()]
+    val_transforms = [Scale((h, w)),
+                CentralCrop((h,w)),
                ImageNormalization(),
                ImageNormalizationMeanStd(),
                ToTensor()]
     # define data path
 
-    train_dataset = OcrDataset(DATASET_PATHS[0], transforms=transforms, train=True)
+    train_dataset = OcrDataset(DATASET_PATHS[0], transforms=train_transforms, train=True)
 
     train_loader = DataLoader(
         train_dataset,
         batch_size=BATCH_SIZE,
         shuffle=True,
         drop_last=True,
-        num_workers=1,
+        num_workers=4,
     )
-    # IT IS BETTER TO SPLIT DATA INTO TRAIN|VAL AND USE METRICS ON VAL
-    # val_dataset_paths = [p / "val" for p in DATASET_PATHS]
-    # val_dataset = ConcatDataset([OcrDataset(p) for p in val_dataset_paths])
-    #
-    val_dataset = OcrDataset(DATASET_PATHS[0], transforms=transforms, train=False)
+    val_dataset = OcrDataset(DATASET_PATHS[0], transforms=val_transforms, train=False)
     val_loader = DataLoader(
         val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4
     )
 
     model = CRNNModel(MODEL_PARAMS)
-    # YOU CAN ADD CALLBACK IF IT NEEDED, FIND MORE IN argus.callbacks
+
     callbacks = [
         MonitorCheckpoint(EXPERIMENT_DIR, monitor="val_char_error_rate", max_saves=6),
     ]
-    # YOU CAN IMPLEMENT DIFFERENT METRICS AND USE THEM TO SEE HOW MANY CORRECT PREDICTION YOU HAVE
-    # metrics = [StringAccuracy()]
 
     metrics = [CER()]
     model.fit(
