@@ -2,6 +2,6 @@
   "ocr_image_size": [32, 80],
   "model_image_height": 32,
   "model_image_ch": 1,
-  "model_rnn_size": 256,
+  "model_rnn_size": 128,
   "data_path": "/data/tips_tricks_data/data/the_best"
 }
