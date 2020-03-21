@@ -32,7 +32,7 @@ def setup_logging(path, level='INFO'):
 
 
 class CNDProject:
-    def __init__(self, name, video_path, save_path, model_path, use_cuda, fps=10, frame_size=(1600, 800), coord=(500, 500)):
+    def __init__(self, name, video_path, save_path, model_path, use_cuda, true_text, fps=10, frame_size=(1600, 800), coord=(500, 500)):
         self.name = name
         self.logger = logging.getLogger(self.name)
         self.state = State()
@@ -46,7 +46,7 @@ class CNDProject:
         self.ocr_stream = OcrStream(self.name, self.state, self.video_reader, predictor_info)
 
         self.visualize_stream = VisualizeStream("VisualizeStream", self.video_reader,
-                                                self.state, save_path, fps, frame_size, coord)
+                                                self.state, save_path, fps, frame_size, coord, true_text)
         self.logger.info("Start Project")
 
     def start(self):
@@ -78,12 +78,13 @@ if __name__ == '__main__':
     parser.add_argument("--save", help="Save path for video", required=True)
     parser.add_argument("--log", help="Logging file", required=True)
     parser.add_argument("--use-cuda", help="Use cuda for prediction", action='store_true')
+    parser.add_argument("--text", help="True text ", required=True)
     args = parser.parse_args()
     setup_logging(args.log, args.level)
     logger = logging.getLogger(__name__)
     project = None
     try:
-        project = CNDProject("CNDProject", args.video_path, args.save, args.model, args.use_cuda)
+        project = CNDProject("CNDProject", args.video_path, args.save, args.model, args.use_cuda, args.text)
         project.start()
     except Exception as e:
         logger.exception(e)

@@ -9,17 +9,31 @@ from worker.video_writer import VideoWriter
 
 
 class Visualizer:
-    def __init__(self, state: State, coord, color=(0, 0, 255), thick=2, font_scale=1.2, font=cv2.FONT_HERSHEY_SIMPLEX):
+    def __init__(self, state: State, coord, true_text, color=(0, 0, 255), thick=2, font_scale=1.2, font=cv2.FONT_HERSHEY_SIMPLEX):
         self.state = state
         self.coord_x, self.coord_y = coord
         self.color = color
         self.thickness = thick
         self.font_scale = font_scale
         self.font = font
+        self.true_text = true_text
+        self.max_acc = 0.0
 
     def _draw_ocr_text(self):
         text = self.state.text
         frame = self.state.frame
+        i = 0
+        n = 0
+        # print(len(text), len(self.true_text) )
+        while (i< len(text) and i < len(self.true_text)):
+
+            if text[i] == self.true_text[i]:
+                n+=1
+            i += 1
+        acc = n/max(len(text), len(self.true_text))
+        if acc > self.max_acc:
+            self.max_acc = acc
+
         if text:
             cv2.putText(frame, text,
                         (self.coord_x, self.coord_y),
@@ -37,7 +51,7 @@ class Visualizer:
 class VisualizeStream:
     def __init__(self, name,
                  in_video: VideoReader,
-                 state: State, video_path, fps, frame_size, coord):
+                 state: State, video_path, fps, frame_size, coord, true_text):
         self.name = name
         self.logger = logging.getLogger(self.name)
         self.state = state
@@ -51,7 +65,7 @@ class VisualizeStream:
         self.stopped = True
         self.visualize_thread = None
 
-        self.visualizer = Visualizer(self.state, self.coord)
+        self.visualizer = Visualizer(self.state, self.coord, true_text)
 
         self.logger.info("Create VisualizeStream")
 
@@ -84,8 +98,10 @@ class VisualizeStream:
         # self.in_video.start()
 
     def stop(self):
+        self.logger.info("MAX ACC: {}".format(self.visualizer.max_acc))
         self.logger.info("Stop VisualizeStream")
         self.stopped = True
+
         self.out_video.stop()
         if self.visualize_thread is not None:
             self.visualize_thread.join()

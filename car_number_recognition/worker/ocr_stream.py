@@ -1,6 +1,7 @@
 import logging
 from threading import Thread
 import numpy as np
+import time
 
 from ocr.predictor import Predictor
 from worker.state import State
@@ -16,11 +17,13 @@ class OcrStream:
         self.ocr_thread = None
         self.stopped = False
         self.predictor = Predictor(predictor_info['model'], (32, 80), predictor_info['device'])
-
+        self.frame_counter = 0
+        self.time = None
         self.logger.info("Create OcrStream")
 
     def _ocr_loop(self):
         try:
+            self.start_time = time.time()
             while True:
                 if self.stopped:
                     return
@@ -29,6 +32,9 @@ class OcrStream:
                 pred = self.predictor.predict(frame[np.newaxis, :])
                 self.state.text = pred
                 self.state.frame = frame
+                self.frame_counter += 1
+                if self.frame_counter % 10 == 0:
+                    self.logger.info("FPS: " + str(self.frame_counter / (time.time() - self.start_time)))
 
         except Exception as e:
             # self.logger.exception(e)
