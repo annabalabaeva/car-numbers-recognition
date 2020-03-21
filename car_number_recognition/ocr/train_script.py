@@ -36,7 +36,7 @@ DATASET_PATHS = [
 # CHANGE YOUR BATCH SIZE
 BATCH_SIZE = 32
 # 400 EPOCH SHOULD BE ENOUGH
-NUM_EPOCHS = 800
+NUM_EPOCHS = 1200
 
 # alphabet = " "
 alphabet = "-ABEKMHOPCTYX"
@@ -62,10 +62,11 @@ if __name__ == "__main__":
     else:
         EXPERIMENT_DIR.mkdir(parents=True, exist_ok=True)
     h, w = CV_CONFIG.get("ocr_image_size")
-    train_transforms = [Scale((int(1.2*h), int(1.2*w))),
+    train_transforms = [RandomScale((h, w)),
                         RandomRotation(p=0.6),
-                        RandomBlur(p=0.4),
+                        RandomBlur(p=0.3),
                         RandomCrop((h, w)),
+                        RandomPad(min_scale=0.6),
                         RandomBrightness(),
                         RandomContrast(),
                         ImageNormalization(),

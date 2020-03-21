@@ -93,9 +93,9 @@ if __name__ == "__main__":
         print("(Torchvision transforms) time per one image:", (t / len(dataset_torchvision_transforms)))
     else:
         dataset = OcrDataset(args.data_dir, transforms=
-               [Scale((int(1.1*32), int(1.1*80))),
-                RandomRotation(p=0.6),
-                RandomBlur()
+               [RandomScale((int(32), int(80))),
+                # RandomRotation(p=0.6),
+                # RandomBlur()
                   # RandomFlip(),
                #    RandomCrop((32,80)),
                # RandomBrightness(),
